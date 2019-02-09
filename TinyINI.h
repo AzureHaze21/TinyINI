@@ -70,15 +70,15 @@ public:
 	using Sections = std::map<std::wstring, KeyValues>;
 	using IniFile = Sections;
 
-	static auto Read(const char *path, std::locale locale = std::locale("en_US.UTF-8"))
+	static auto Read(const char *path, std::locale locale = std::locale(""))
 	{
 		Sections sections;
 		std::wstring currentSection;
 		if (std::wifstream ifs(path, std::ios::binary); ifs)
 		{
 			std::ios_base::sync_with_stdio(false);
-			ifs.imbue(locale);
 			Encoding encoding = ConsumeBOM(ifs);
+			ifs.imbue(locale);
 			std::wstring line;
 			while (std::getline(ifs, line))
 			{
