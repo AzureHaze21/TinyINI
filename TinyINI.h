@@ -73,7 +73,9 @@ private:
 		return  std::pair<std::wstring, std::wstring>{ key, val };
 	}
 public:
-	static auto Read(const char *path, std::locale locale = std::locale(""))
+	TinyIni(const char *path, std::locale locale = std::locale("")) { *this = TinyIni::Read(path, locale); }
+
+	static TinyIni Read(const char *path, std::locale locale = std::locale(""))
 	{
 		Sections sections;
 		std::wstring currentSection;
@@ -122,8 +124,8 @@ public:
 		return (key == nullptr ? L"" : get(section)[key]);
 	}
 
-	KeyValues operator[](const wchar_t *key)
+	KeyValues operator[](const wchar_t *index)
 	{
-		return (key == nullptr ? KeyValues{} : sections[key]);
+		return (index == nullptr ? KeyValues{} : sections[index]);
 	}
 };
