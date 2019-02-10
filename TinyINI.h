@@ -119,11 +119,11 @@ public:
 
 	std::wstring get(const wchar_t *section, const wchar_t *key)
 	{
-		return key == nullptr ? L"" : get(section)[key];
+		return (key == nullptr ? L"" : get(section)[key]);
 	}
 
-	KeyValues operator[](const wchar_t *index)
+	KeyValues operator[](const wchar_t *key)
 	{
-		return (sections.count(index) > 0 ? sections[index] : KeyValues{});
+		return (key == nullptr ? KeyValues{} : sections[key]);
 	}
 };
