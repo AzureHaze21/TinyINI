@@ -79,7 +79,6 @@ public:
 		std::wstring currentSection;
 		if (std::wifstream ifs(path, std::ios::binary); ifs)
 		{
-			std::ios_base::sync_with_stdio(false);
 			Encoding encoding = ConsumeBOM(ifs);
 			ifs.imbue(locale);
 			std::wstring line;
