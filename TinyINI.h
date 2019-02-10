@@ -87,7 +87,7 @@ public:
 				if (line.front() == 0) line.erase(line.begin());		
 				if (encoding != DEFAULT) utf16le_to_utf8(line);
 				TrimString(line);
-				if (line.front() == L';') continue;
+				if (line.front() == L';' || line.front() == '#') continue;
 				if (line.front() == L'[')
 				{
 					if (line.back() != L']') continue;
