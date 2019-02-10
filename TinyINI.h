@@ -9,7 +9,7 @@
 
 class TinyIni
 {
-private:
+public:
 	class KeyValues
 	{
 		friend class TinyIni;
@@ -18,7 +18,7 @@ private:
 	public:
 		auto operator[](const wchar_t *key) { return key == nullptr ? L"" : data[key]; }
 	};
-
+private:
 	class Sections
 	{
 		friend class TinyIni;
