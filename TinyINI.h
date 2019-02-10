@@ -32,7 +32,7 @@ private:
 	};
 
 	template<typename charType>
-	static Encoding ConsumeBOM(std::basic_ifstream<charType>& stream)
+	Encoding ConsumeBOM(std::basic_ifstream<charType>& stream)
 	{
 		unsigned char BOM[4]{ 0 };
 		charType c = 0;
@@ -49,7 +49,7 @@ private:
 		return DEFAULT;
 	}
 
-	static std::wstring& utf16le_to_utf8(std::wstring& s)
+	std::wstring& utf16le_to_utf8(std::wstring& s)
 	{
 		std::wstring cpy(L"");
 		for (size_t i{ 0 }; i < s.size(); i += 2)
@@ -58,14 +58,14 @@ private:
 		return s;
 	}
 
-	static std::wstring& TrimString(std::wstring& s)
+	std::wstring& TrimString(std::wstring& s)
 	{
 		s.erase(s.begin(), std::find_if_not(s.begin(), s.end(), iswspace));
 		s.erase(std::find_if_not(s.rbegin(), s.rend(), iswspace).base(), s.end());
 		return s;
 	}
 
-	static std::pair<std::wstring, std::wstring> SplitKeyValues(std::wstring& line)
+	std::pair<std::wstring, std::wstring> SplitKeyValues(std::wstring& line)
 	{
 		std::wstring key, val;
 		TrimString(key = line.substr(0, line.find(L'=')));
@@ -73,11 +73,9 @@ private:
 		return  std::pair<std::wstring, std::wstring>{ key, val };
 	}
 public:
-	TinyIni(const char *path, std::locale locale = std::locale("")) { *this = TinyIni::Read(path, locale); }
 
-	static TinyIni Read(const char *path, std::locale locale = std::locale(""))
+	TinyIni(const char *path, std::locale locale = std::locale(""))
 	{
-		Sections sections;
 		std::wstring currentSection;
 		if (std::wifstream ifs(path, std::ios::binary); ifs)
 		{
@@ -111,7 +109,6 @@ public:
 				}
 			}
 		}
-		return TinyIni(sections);
 	}
 
 	KeyValues get(const wchar_t *section)
@@ -129,3 +126,4 @@ public:
 		return (index == nullptr ? KeyValues{} : sections[index]);
 	}
 };
+
