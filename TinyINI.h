@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _TINYINI_H_
+#define _TINYINI_H_
 
 #include <fstream>
 #include <iostream>
@@ -8,10 +9,25 @@
 
 class TinyIni
 {
-public:
-	using KeyValues = std::map<std::wstring, std::wstring>;
-	using Sections = std::map<std::wstring, KeyValues>;
 private:
+	class KeyValues
+	{
+		friend class TinyIni;
+	private:
+		std::map<std::wstring, std::wstring> data{};
+	public:
+		auto operator[](const wchar_t *key) { return key == nullptr ? L"" : data[key]; }
+	};
+
+	class Sections
+	{
+		friend class TinyIni;
+	private:
+		std::map<std::wstring, KeyValues> data{};
+	public:
+		auto operator[](const wchar_t *key) { return key == nullptr ? KeyValues{} : data[key]; }
+	};
+
 	Sections sections;
 
 	TinyIni(Sections _sections) : sections(_sections) {}
@@ -79,6 +95,7 @@ public:
 		std::wstring currentSection;
 		if (std::wifstream ifs(path, std::ios::binary); ifs)
 		{
+			std::ios_base::sync_with_stdio(false);
 			Encoding encoding = ConsumeBOM(ifs);
 			ifs.imbue(locale);
 			std::wstring line;
@@ -97,14 +114,14 @@ public:
 					line.erase(line.end() - 1);
 					TrimString(line);
 					currentSection = line;
-					sections.try_emplace(line, KeyValues{});
+					sections.data.try_emplace(line, KeyValues{});
 					continue;
 				}
 				if (!currentSection.empty())
 				{
 					if (std::find(line.begin(), line.end(), L'=') == line.end()) continue;
 					auto kv = SplitKeyValues(line);
-					sections[currentSection].try_emplace(kv.first, kv.second);
+					sections.data[currentSection].data.try_emplace(kv.first, kv.second);
 				}
 			}
 		}
@@ -112,7 +129,7 @@ public:
 
 	KeyValues get(const wchar_t *section)
 	{
-		return (section == nullptr ? KeyValues{} : sections[section]);
+		return (section == nullptr ? KeyValues{} : sections.data[section]);
 	}
 
 	std::wstring get(const wchar_t *section, const wchar_t *key)
@@ -126,3 +143,4 @@ public:
 	}
 };
 
+#endif
