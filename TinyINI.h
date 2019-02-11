@@ -65,11 +65,25 @@ private:
 		return DEFAULT;
 	}
 
-	std::wstring& utf16le_to_utf8(std::wstring& s)
+	std::wstring& convert(std::wstring& s, Encoding encoding)
 	{
 		std::wstring cpy(L"");
-		for (size_t i{ 0 }; i < s.size(); i += 2)
-			cpy += s[i] | (s[i + 1] << 8);
+
+		switch (encoding)
+		{
+		case UTF16LE: {
+			for (size_t i{ 0 }; i < s.size(); i += 2)
+				cpy += s[i] | (s[i + 1] << 8);
+			break;
+		}
+		case UTF16BE: {
+			for (size_t i{ 0 }; i < s.size(); i += 2)
+				cpy += s[i + 1] | (s[i] << 8);
+			break;
+		}
+		case UTF8: return s;
+		}
+
 		s = cpy;
 		return s;
 	}
@@ -97,14 +111,14 @@ public:
 		{
 			std::ios_base::sync_with_stdio(false);
 			Encoding encoding = ConsumeBOM(ifs);
-			ifs.imbue(locale);
+			if (encoding == UTF8) ifs.imbue(std::locale("en_US.UTF-8"));
 			std::wstring line;
 			while (std::getline(ifs, line))
 			{
 				if (line.empty() || std::all_of(line.begin(), line.end(), [](wchar_t c) { return iswspace(c) || c == 0; }))
 					continue;
 				if (line.front() == 0) line.erase(line.begin());
-				if (encoding != DEFAULT) utf16le_to_utf8(line);
+				if (encoding != DEFAULT) convert(line, encoding);
 				TrimString(line);
 				if (line.front() == L';' || line.front() == '#') continue;
 				if (line.front() == L'[')
