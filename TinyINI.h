@@ -29,6 +29,7 @@ private:
 	};
 
 	Sections sections;
+	std::wifstream ifs;
 
 	TinyIni(Sections _sections) : sections(_sections) {}
 
@@ -107,7 +108,8 @@ public:
 	TinyIni(const char *path, std::locale locale = std::locale(""))
 	{
 		std::wstring currentSection;
-		if (std::wifstream ifs(path, std::ios::binary); ifs)
+		ifs.open(path, std::ios::binary);
+		if (ifs)
 		{
 			std::ios_base::sync_with_stdio(false);
 			Encoding encoding = ConsumeBOM(ifs);
@@ -139,6 +141,11 @@ public:
 				}
 			}
 		}
+	}
+
+	~TinyIni() noexcept
+	{
+		if (ifs) ifs.close();
 	}
 
 	KeyValues get(const wchar_t *section)
