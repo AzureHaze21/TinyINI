@@ -19,6 +19,8 @@ public:
 		auto operator[](const wchar_t *key) { return key == nullptr ? L"" : data[key]; }
 	};
 private:
+	std::wifstream filestream;
+
 	class Sections
 	{
 		friend class TinyIni;
@@ -27,9 +29,6 @@ private:
 	public:
 		auto operator[](const wchar_t *key) { return key == nullptr ? KeyValues{} : data[key]; }
 	};
-
-	Sections sections;
-	std::wifstream ifs;
 
 	TinyIni(Sections _sections) : sections(_sections) {}
 
@@ -48,11 +47,13 @@ private:
 		GB18030
 	};
 
+	Sections sections;
+	Encoding encoding = DEFAULT;
+
 	template<typename charType>
 	Encoding ConsumeBOM(std::basic_ifstream<charType>& stream)
 	{
 		unsigned char BOM[4]{ 0 };
-		charType c = 0;
 		int i = 0;
 		while (stream && (i < sizeof(BOM)))
 		{
@@ -103,24 +104,54 @@ private:
 		TrimString(val = line.substr(line.find(L'=') + 1, line.size()));
 		return  std::pair<std::wstring, std::wstring>{ key, val };
 	}
-public:
 
+	std::wistream& readStream(std::wistream& stream, std::wstring& out, Encoding encoding)
+	{
+		switch (encoding)
+		{
+		case DEFAULT:	return std::getline(stream, out);
+		case UTF8:		return std::getline(stream, out);
+		case UTF16BE:
+		{
+			out.clear();
+			wchar_t c = 0;
+			while (stream && c != L'\n') {
+				c = (stream.get() << 8) | stream.get();
+				out += c;
+			}
+			return stream;
+		}
+		case UTF16LE:
+		{
+			out.clear();
+			wchar_t c = 0;
+			while (stream && c != L'\n') {
+				c = stream.get() | (stream.get() << 8);
+				out += c;
+			}
+			return stream;
+		}
+		}
+		return stream;
+	}
+
+public:
 	TinyIni(const char *path, std::locale locale = std::locale(""))
 	{
 		std::wstring currentSection;
-		ifs.open(path, std::ios::binary);
-		if (ifs)
+		filestream.open(path, std::ios::binary);
+		if (filestream)
 		{
 			std::ios_base::sync_with_stdio(false);
-			Encoding encoding = ConsumeBOM(ifs);
-			if (encoding == UTF8) ifs.imbue(std::locale("en_US.UTF-8"));
+			encoding = ConsumeBOM(filestream);
+			if (encoding == UTF8) filestream.imbue(std::locale("en_US.UTF-8"));
 			std::wstring line;
-			while (std::getline(ifs, line))
+			while (readStream(filestream, line, encoding))
 			{
 				if (line.empty() || std::all_of(line.begin(), line.end(), [](wchar_t c) { return iswspace(c) || c == 0; }))
 					continue;
 				if (line.front() == 0) line.erase(line.begin());
-				if (encoding != DEFAULT) convert(line, encoding);
+				//if (encoding == UTF8) convert(line, UTF8);
 				TrimString(line);
 				if (line.front() == L';' || line.front() == '#') continue;
 				if (line.front() == L'[')
@@ -145,7 +176,7 @@ public:
 
 	~TinyIni() noexcept
 	{
-		if (ifs) ifs.close();
+		if (filestream) filestream.close();
 	}
 
 	KeyValues get(const wchar_t *section)
@@ -161,6 +192,32 @@ public:
 	KeyValues operator[](const wchar_t *index)
 	{
 		return (index == nullptr ? KeyValues{} : sections[index]);
+	}
+
+	bool exists(const wchar_t *index)
+	{
+		return sections.data.find(index) != sections.data.end();
+	}
+
+	bool exists(const wchar_t *index, const wchar_t *key)
+	{
+		return exists(index) && sections[index].data.find(key) != sections[index].data.end();
+	}
+
+	std::vector<std::wstring> getSectionNames()
+	{
+		std::vector<std::wstring> names;
+		names.reserve(sections.data.size());
+		for (const auto& name : sections.data) names.push_back(name.first);
+		return names;
+	}
+
+	std::vector<std::wstring> getSectionKeys(const wchar_t *section)
+	{
+		std::vector<std::wstring> keys{};
+		keys.reserve(sections[section].data.size());
+		for (const auto& key : sections[section].data) keys.push_back(key.first);
+		return keys;
 	}
 };
 
