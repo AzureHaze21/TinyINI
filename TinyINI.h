@@ -7,6 +7,12 @@
 #include <map>
 #include <algorithm>
 
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <map>
+#include <algorithm>
+
 class TinyIni
 {
 public:
@@ -105,34 +111,34 @@ private:
 		return  std::pair<std::wstring, std::wstring>{ key, val };
 	}
 
-	std::wistream& readStream(std::wistream& stream, std::wstring& out, Encoding encoding)
+	bool readStream(std::wistream& stream, std::wstring& out, Encoding encoding)
 	{
 		switch (encoding)
 		{
-		case DEFAULT:	return std::getline(stream, out);
-		case UTF8:		return std::getline(stream, out);
+		case DEFAULT:	std::getline(stream, out);
+		case UTF8:		std::getline(stream, out);
 		case UTF16BE:
 		{
 			out.clear();
 			wchar_t c = 0;
-			while (stream && c != L'\n') {
+			while (stream && c != L'\n')
+			{
 				c = (stream.get() << 8) | stream.get();
 				out += c;
 			}
-			return stream;
 		}
 		case UTF16LE:
 		{
 			out.clear();
 			wchar_t c = 0;
-			while (stream && c != L'\n') {
+			while (stream && c != L'\n')
+			{
 				c = stream.get() | (stream.get() << 8);
 				out += c;
 			}
-			return stream;
 		}
 		}
-		return stream;
+		return stream.good() || out.size() > 0;
 	}
 
 public:
